@@ -6,3 +6,6 @@ class Respone {
         this.succes=statusCode<400;//Sets the success flag to:true if the status code is less than 400 false otherwise
     }
 }
+
+
+//this a api wrapper 

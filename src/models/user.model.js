@@ -57,7 +57,7 @@ userschema.methods.ispasswordcorrect=async function(password){//this is a "metho
     return await bcrypt.compare(password,this.password)
 }
 userSchema.methods.generateAcesstoken=function(){
-  return  jwt.sign(
+  return  jwt.sign( //this login hanler part 
         {
             _id:this._id, //this is payload to genrate a token for the user and this. email all are coming from db
             email:this.email,
@@ -77,7 +77,7 @@ userSchema.methods.generateRefreshtoken=function(){
 
         },
         process.env.REFRESH_TOKEN_SCERET,
-        {expiresIn:REFRESH_TOKEN_EXPIRy}
+        {expiresIn:REFRESH_TOKEN_EXPIRY}
     )
 }
 
