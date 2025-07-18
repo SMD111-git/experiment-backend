@@ -9,5 +9,9 @@ app.use(cors({
 app.use(express.json({limit:"16kb"}))//Parses incoming JSON and URL-encoded payloads (like form data).Limits body size to 16kb to prevent large payload attacks.
 app.use(express.urlencoded({extended:true,limit:"16kb"}))
 app.use(express.static("Public"))//Serves static files from the "Public" folder (e.g., images, CSS, JavaScript files).
-app.use(express.cookieParser())
+app.use(cookieParser())
+//routes imports
+import userRouter from "./routes/user.routes.js"
+//router directions
+app.use('/api/v1/users',userRouter)
 export {app}
