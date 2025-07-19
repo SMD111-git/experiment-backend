@@ -22,7 +22,7 @@ const resgiteruser = asyncHandler(async(req,res)=>{
    if(existeduser){
     throw new ApiError(409,"the user with email or username existing")
    }
-   const avatarlocalpath=req.files?.avatar[0]?.path //acess the files 
+   const avatarlocalpath=req.files?.avatar[0]?.path //acess the files  from local file system (public) then is accessed
    const coverimagelocalpath=req.files?.coverimage[0]?.path
    if(!avatarlocalpath){//checking the avatra
     throw new (400,"avatar file is required")
