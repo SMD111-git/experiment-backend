@@ -4,14 +4,29 @@ import { isemailvalid,ispasswordvaild } from "../utils/Apivalid.js"
 import { User} from "../models/user.model.js"
 import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
+import { application } from "express"
+
+const  generateAcessANDRefreshtoken= async(userId)=>{
+    try {
+        const user= await User.findById(userId) //find userid from the userschema.model
+        const userAcesstoken = user.generateAcesstoken() //handeling the tokens from the user.schema.model and also the point note is that user is variable used to get the access token
+        const userRefreshtoken= user.generateRefreshtoken() //genreated refresh token in next it sent to db ,  if client login and the refresh token in client side and db match then client authniction to do futher things
+        user.userRefreshtoken =userRefreshtoken //send the refresh token as refences to sent to db in specfied object refereshtoken
+        user.save({validateBeforeSave:false}) //This line saves the user document back to the database without running validation rules defined in your Mongoose schema.
+        /**If any of these required fields are missing or invalid when you call user.save(), Mongoose will throw a validation error.in db there object witht fileds required they will true the error */
+        return({userAcesstoken,userRefreshtoken})
+    } catch (error) {
+        throw new ApiError(500,"something went wrong well genrating refresh and acess token")
+    }
+}
 const resgiteruser = asyncHandler(async(req,res)=>{
    const {fullname,email,username,password}= req.body //acess the client side infromation to access we will use req.body method 
    
-   console.log("Extracted values:");
+   /*console.log("Extracted values:");
    console.log("fullname:", fullname);
    console.log("email:", email);  
    console.log("username:", username);
-   console.log("password:", password ? "***provided***" : "undefined"); 
+   console.log("password:", password ? "***provided***" : "undefined"); */
    //console.log("email:",email);
    
    //console.log("password:",password);
@@ -33,7 +48,11 @@ const resgiteruser = asyncHandler(async(req,res)=>{
    
    const avatarlocalpath=req.files?.avatar[0]?.path; //access the files from local file system (public) then is accessed
 
-   const coverimagelocalpath=req.files?.coverimage[0]?.path;
+   //const coverimagelocalpath=req.files?.coverimage[0]?.path;// this line of code has some issues regarding when the file is empty and shows error but it is not mandatory to send the file to covercome this
+   let coverimagelocalpath;
+   if(req.files && Array.isArray(req.files.coverimage) && req.files.coverimage.length>0){
+        coverimagelocalpath=req.files.coverimage[0].path
+    } //this another method of handeling the coverimage , even if we donot give coverimage
    
    if(!avatarlocalpath){//checking the avatar
     throw new ApiError(400,"avatar file is required")
@@ -49,7 +68,7 @@ const resgiteruser = asyncHandler(async(req,res)=>{
    
     //creating user object and creating entry in db or storing
    
-   const user = await User.create({
+   const user = await User.create({ //creating user send to db or inject to db
     fullname,
     avatar:avatar.url,
     coverimage:coverimage?.url || "", //over here as we have not made the coverimage to be compulor to be upload to the not to crashed, 
@@ -70,4 +89,46 @@ const resgiteruser = asyncHandler(async(req,res)=>{
 })
 
 
-export {resgiteruser}
+//login
+const loginuser=asyncHandler(async(req,res)=>{
+    //req boby getting data
+    //usernamed or email based acess to site
+    //find the user in db or  no user in 
+    //password check
+    //acess annd refresh token
+    //sent to cookies 
+    const {username,email,password}=req.body
+    if(!username || !email){ //if there are now username or email of the client from form
+        throw new ApiError(400,"username or email is required ")
+    }
+    const user= await User.findOne({ //if there user in we can find it in db 
+        $or:[{username},{email}] //this mongodb operator where it check any on value either from username or email
+    })
+    if(!user){ //if the user is not in the db it throw this
+        throw new ApiError(400,"username or email is not existing in the db")
+    }
+     const ispasswordvaild= await user.isPasswordCorrect(password) //so over here we are acess the password by the varaiable user above this line of code where are using to find the email  and usernbame
+     if(!ispasswordvaild){
+        throw new ApiError(401,"this password is wrong ")
+     }
+     const {userAcesstoken,userRefreshtoken}=await generateAcessANDRefreshtoken(user._id) //this verify user_.id  with the token genrrated
+     const loggedin = await User.findById(user._id).select("-password -refreshToken")
+     const options={//this are cookies
+        httpOlny:true,
+        secure:true
+     }
+     return res.status(200).cookie("userAcesstoken",userAcesstoken,options)
+     .cookie("Refreshtoken",userRefreshtoken,options)
+     .json(new ApiRespone(200,{
+        user:loginuser,
+        userAcesstoken,//this data which we reflect on postman or on client broswer
+        userRefreshtoken
+     },
+     "user is sucessfully loggedin"
+    ))
+})
+const logoutuser=asyncHandler(async(req,res)=>{
+    
+})
+
+export {resgiteruser,loginuser}
