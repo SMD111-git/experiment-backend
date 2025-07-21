@@ -68,7 +68,7 @@ const resgiteruser = asyncHandler(async(req,res)=>{
    
     //creating user object and creating entry in db or storing
    
-   const user = await User.create({
+   const user = await User.create({ //db 
     fullname,
     avatar:avatar.url,
     coverimage:coverimage?.url || "", //over here as we have not made the coverimage to be compulor to be upload to the not to crashed, 
