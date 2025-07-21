@@ -4,21 +4,6 @@ import { isemailvalid,ispasswordvaild } from "../utils/Apivalid.js"
 import { User} from "../models/user.model.js"
 import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
-import { application } from "express"
-
-const  generateAcessANDRefreshtoken= async(userId)=>{
-    try {
-        const user= await User.findById(userId) //find userid from the userschema.model
-        const userAcesstoken = user.generateAcesstoken() //handeling the tokens from the user.schema.model and also the point note is that user is variable used to get the access token
-        const userRefreshtoken= user.generateRefreshtoken() //genreated refresh token in next it sent to db ,  if client login and the refresh token in client side and db match then client authniction to do futher things
-        user.userRefreshtoken =userRefreshtoken //send the refresh token as refences to sent to db in specfied object refereshtoken
-        user.save({validateBeforeSave:false}) //This line saves the user document back to the database without running validation rules defined in your Mongoose schema.
-        /**If any of these required fields are missing or invalid when you call user.save(), Mongoose will throw a validation error.in db there object witht fileds required they will true the error */
-        return({userAcesstoken,userRefreshtoken})
-    } catch (error) {
-        throw new ApiError(500,"something went wrong well genrating refresh and acess token")
-    }
-}
 const resgiteruser = asyncHandler(async(req,res)=>{
    const {fullname,email,username,password}= req.body //acess the client side infromation to access we will use req.body method 
    
@@ -68,7 +53,7 @@ const resgiteruser = asyncHandler(async(req,res)=>{
    
     //creating user object and creating entry in db or storing
    
-   const user = await User.create({ //creating user send to db or inject to db
+   const user = await User.create({
     fullname,
     avatar:avatar.url,
     coverimage:coverimage?.url || "", //over here as we have not made the coverimage to be compulor to be upload to the not to crashed, 
@@ -88,8 +73,6 @@ const resgiteruser = asyncHandler(async(req,res)=>{
     )
 })
 
-
-//login
 const loginuser=asyncHandler(async(req,res)=>{
     //req boby getting data
     //usernamed or email based acess to site
@@ -98,7 +81,7 @@ const loginuser=asyncHandler(async(req,res)=>{
     //acess annd refresh token
     //sent to cookies 
     const {username,email,password}=req.body
-    if(!username || !email){ //if there are now username or email of the client from form
+    if(!(username || !email)){ //if there are now username or email of the client from form
         throw new ApiError(400,"username or email is required ")
     }
     const user= await User.findOne({ //if there user in we can find it in db 
@@ -127,8 +110,31 @@ const loginuser=asyncHandler(async(req,res)=>{
      "user is sucessfully loggedin"
     ))
 })
-const logoutuser=asyncHandler(async(req,res)=>{
-    
+
+const logoutuser = asyncHandler(async(req, res) => {
+    // TODO: Implement logout functionality
+    // Clear refresh token from database
+    // Clear cookies
+    // Return success response
+    await User.findByIdAndUpdate( // this db method 
+        req.user._id, //find id by re method frommiddelware in db
+        {
+            $set:{ //update filed in db 
+                refreshToken:undefined
+            }
+        },
+        {
+            new:true // this push in db filed of refreshtoken
+        }
+    )
+    const options={//this are cookies
+        httpOlny:true,
+        secure:true
+     }
+
+    res.status(200).clearCookie("userAcesstoken",options).clearCookie("userRefreshtoken",options).json(
+        new ApiRespone(200, {}, "User logged out successfully")
+    )
 })
 
-export {resgiteruser,loginuser}
+export {resgiteruser, loginuser, logoutuser}
