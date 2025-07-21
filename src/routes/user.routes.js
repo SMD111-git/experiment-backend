@@ -17,5 +17,5 @@ router.route("/register").post(
     ]),
     resgiteruser)
 router.route("/login").post(loginuser)
-router.route("logout").post(verifyJWT,logoutuser)
+router.route("/logout").post(verifyJWT,logoutuser)
 export default router

@@ -4,6 +4,21 @@ import { isemailvalid,ispasswordvaild } from "../utils/Apivalid.js"
 import { User} from "../models/user.model.js"
 import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
+
+const generateAcessANDRefreshtoken = async (userId) => {
+    try {
+        const user = await User.findById(userId)
+        const userAcesstoken = user.generateAcesstoken()
+        const userRefreshtoken = user.generateRefreshtoken()
+        
+        user.refreshToken = userRefreshtoken //r
+        await user.save({ validateBeforeSave: false })
+        
+        return { userAcesstoken, userRefreshtoken }
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating access and refresh token")
+    }
+}
 const resgiteruser = asyncHandler(async(req,res)=>{
    const {fullname,email,username,password}= req.body //acess the client side infromation to access we will use req.body method 
    
@@ -80,12 +95,13 @@ const loginuser=asyncHandler(async(req,res)=>{
     //password check
     //acess annd refresh token
     //sent to cookies 
-    const {username,email,password}=req.body
-    if(!(username || !email)){ //if there are now username or email of the client from form
+      const {username,email, password} = req.body
+      console.log(email)
+    if(!username && !email){ //if there are now username or email of the client from form
         throw new ApiError(400,"username or email is required ")
     }
     const user= await User.findOne({ //if there user in we can find it in db 
-        $or:[{username},{email}] //this mongodb operator where it check any on value either from username or email
+        $or:[{username},{email}] //this mongodb operator where it check any one value either from username or email from db
     })
     if(!user){ //if the user is not in the db it throw this
         throw new ApiError(400,"username or email is not existing in the db")
@@ -97,13 +113,13 @@ const loginuser=asyncHandler(async(req,res)=>{
      const {userAcesstoken,userRefreshtoken}=await generateAcessANDRefreshtoken(user._id) //this verify user_.id  with the token genrrated
      const loggedin = await User.findById(user._id).select("-password -refreshToken")
      const options={//this are cookies
-        httpOlny:true,
+        httpOnly:true,
         secure:true
      }
      return res.status(200).cookie("userAcesstoken",userAcesstoken,options)
-     .cookie("Refreshtoken",userRefreshtoken,options)
+     .cookie("userRefreshtoken",userRefreshtoken,options)
      .json(new ApiRespone(200,{
-        user:loginuser,
+        user:loggedin,
         userAcesstoken,//this data which we reflect on postman or on client broswer
         userRefreshtoken
      },
@@ -128,7 +144,7 @@ const logoutuser = asyncHandler(async(req, res) => {
         }
     )
     const options={//this are cookies
-        httpOlny:true,
+        httpOnly:true,
         secure:true
      }
 

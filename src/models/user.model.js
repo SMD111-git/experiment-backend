@@ -65,8 +65,8 @@ userSchema.methods.generateAcesstoken=function(){
             fullname:this.fullname
 
         },
-        process.env.ACESS_TOKEN_SECERT, //this are random keys in .env file
-        {expiresIn:process.env.ACESS_TOKEN_EXPIRY} //same the random key in .env file
+        process.env.ACCESS_TOKEN_SECRET, //this are random keys in .env file
+        {expiresIn:process.env.ACCESS_TOKEN_EXPIRY} //same the random key in .env file
     )
 }
 userSchema.methods.generateRefreshtoken=function(){
