@@ -4,7 +4,7 @@ import { isemailvalid,ispasswordvaild } from "../utils/Apivalid.js"
 import { User} from "../models/user.model.js"
 import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
-
+import jwt from "jsonwebtoken"
 const generateAcessANDRefreshtoken = async (userId) => {
     try {
         const user = await User.findById(userId)
@@ -135,15 +135,15 @@ const logoutuser = asyncHandler(async(req, res) => {
     await User.findByIdAndUpdate( // this db method 
         req.user._id, //find id by re method frommiddelware in db
         {
-            $set:{ //update filed in db 
-                refreshToken:undefined
+            $set:{ //update filed in db  //$set is a MongoDB update operator that updates the value of a field in a document. If the field doesn't exist, $set will create it.
+                refreshToken:undefined 
             }
         },
         {
-            new:true // this push in db filed of refreshtoken
+            new:true // this push in db filed of refreshtoken //This is a Mongoose-specific option. It tells Mongoose to return the updated document rather than the original
         }
     )
-    const options={//this are cookies
+    const options={//this are cookies //This object is passed as a third argument to res.cookie() to control how the cookie behaves in the browser and over the network.
         httpOnly:true,
         secure:true
      }
@@ -152,5 +152,25 @@ const logoutuser = asyncHandler(async(req, res) => {
         new ApiRespone(200, {}, "User logged out successfully")
     )
 })
-
-export {resgiteruser, loginuser, logoutuser}
+const refreshaccesstoken =asyncHandler(async(req,res)=>{ //this a point where the accesstoken is regenarated to get acesstokens once again after the exiper  and work on 
+   const incomingrefreshtoken= req.cookies.userRefreshtoken || req.body.userRefreshtoken
+   if(!incomingrefreshtoken){
+    throw new ApiError(401,"unauthorized request")
+   }
+   const decoded=jwt.verify(incomingrefreshtoken,process.env.REFRESH_TOKEN_SCERET) //verifying the user.refreshtoken  and check with .env token
+   const user=await User.findById(decoded?._id) //find the token with the _id
+   if(!user){
+    throw new ApiError(401,"invalid refersh token")
+   }
+   if(incomingrefreshtoken !== user?.refreshToken){ //check the incomingtoken  with the the refreshtokken in db 
+    throw new ApiError(401,"invalid token")
+   }
+   const options={
+    httpOnly:true,
+    secure:true
+   }//genreating the acess and refresh token to get the session actived again
+   const{accesstoken,newRefreshToken}=await generateAcessANDRefreshtoken(user._id)
+   return res.status(200).cookie("acesstoke",accesstoken,options).cookie("newRefreshtoken",newRefreshToken,options)
+   .json(new ApiRespone(200),{accesstoken,newRefreshToken}) 
+})
+export {resgiteruser, loginuser, logoutuser,refreshaccesstoken}
