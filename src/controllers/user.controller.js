@@ -5,14 +5,15 @@ import { User} from "../models/user.model.js"
 import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
 import jwt from "jsonwebtoken"
+import { throws } from "assert"
 const generateAcessANDRefreshtoken = async (userId) => {
     try {
         const user = await User.findById(userId)
         const userAcesstoken = user.generateAcesstoken()
         const userRefreshtoken = user.generateRefreshtoken()
         
-        user.refreshToken = userRefreshtoken //r
-        await user.save({ validateBeforeSave: false })
+        user.refreshToken = userRefreshtoken //send refreshtoken in to db
+        await user.save({ validateBeforeSave: false }) //here it svae the refresh token into the db
         
         return { userAcesstoken, userRefreshtoken }
     } catch (error) {
@@ -94,10 +95,11 @@ const loginuser=asyncHandler(async(req,res)=>{
     //find the user in db or  no user in 
     //password check
     //acess annd refresh token
-    //sent to cookies 
+    //sent  the token to cookies 
+    //respone that the user is logged in
       const {username,email, password} = req.body
       console.log(email)
-    if(!username && !email){ //if there are now username or email of the client from form
+    if(!username && !email){ //if there are no username or email of the client from form
         throw new ApiError(400,"username or email is required ")
     }
     const user= await User.findOne({ //if there user in we can find it in db 
@@ -112,7 +114,7 @@ const loginuser=asyncHandler(async(req,res)=>{
      }
      const {userAcesstoken,userRefreshtoken}=await generateAcessANDRefreshtoken(user._id) //this verify user_.id  with the token genrrated
      const loggedin = await User.findById(user._id).select("-password -refreshToken")
-     const options={//this are cookies
+     const options={//this are cookies and save this thing sever and doesnot get modifdy on the frontend
         httpOnly:true,
         secure:true
      }
@@ -133,7 +135,7 @@ const logoutuser = asyncHandler(async(req, res) => {
     // Clear cookies
     // Return success response
     await User.findByIdAndUpdate( // this db method 
-        req.user._id, //find id by re method frommiddelware in db
+        req.user._id, //find id by req method from middelware in db
         {
             $set:{ //update filed in db  //$set is a MongoDB update operator that updates the value of a field in a document. If the field doesn't exist, $set will create it.
                 refreshToken:undefined 
@@ -157,20 +159,24 @@ const refreshaccesstoken =asyncHandler(async(req,res)=>{ //this a point where th
    if(!incomingrefreshtoken){
     throw new ApiError(401,"unauthorized request")
    }
-   const decoded=jwt.verify(incomingrefreshtoken,process.env.REFRESH_TOKEN_SCERET) //verifying the user.refreshtoken  and check with .env token
-   const user=await User.findById(decoded?._id) //find the token with the _id
-   if(!user){
-    throw new ApiError(401,"invalid refersh token")
+   try {
+    const decoded=jwt.verify(incomingrefreshtoken,process.env.REFRESH_TOKEN_SCERET) //verifying the user.refreshtoken  and check with .env token
+    const user=await User.findById(decoded?._id) //find the token with the _id
+    if(!user){
+     throw new ApiError(401,"invalid refersh token")
+    }
+    if(incomingrefreshtoken !== user?.refreshToken){ //check the incomingtoken  with the the refreshtokken in db 
+     throw new ApiError(401,"invalid token")
+    }
+    const options={
+     httpOnly:true,
+     secure:true
+    }//genreating the acess and refresh token to get the session actived again
+    const{accesstoken,newRefreshToken}=await generateAcessANDRefreshtoken(user._id)
+    return res.status(200).cookie("acesstoke",accesstoken,options).cookie("newRefreshtoken",newRefreshToken,options)
+    .json(new ApiRespone(200,{accesstoken,newRefreshToken},"access token refreshed")) 
+   } catch (error) {
+     throw new Apierror(401,error?.message || "invalidrefreshaccesstoken")
    }
-   if(incomingrefreshtoken !== user?.refreshToken){ //check the incomingtoken  with the the refreshtokken in db 
-    throw new ApiError(401,"invalid token")
-   }
-   const options={
-    httpOnly:true,
-    secure:true
-   }//genreating the acess and refresh token to get the session actived again
-   const{accesstoken,newRefreshToken}=await generateAcessANDRefreshtoken(user._id)
-   return res.status(200).cookie("acesstoke",accesstoken,options).cookie("newRefreshtoken",newRefreshToken,options)
-   .json(new ApiRespone(200),{accesstoken,newRefreshToken}) 
 })
 export {resgiteruser, loginuser, logoutuser,refreshaccesstoken}

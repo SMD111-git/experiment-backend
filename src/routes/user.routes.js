@@ -17,6 +17,6 @@ router.route("/register").post(
     ]),
     resgiteruser)
 router.route("/login").post(loginuser)
-router.route("/logout").post(verifyJWT,logoutuser) //so to get into futher inside middelware we need to give next() to so we can router to another file or processs
+router.route("/logout").post(verifyJWT,logoutuser) //so to get into futher inside middelware we need to give next()(in the verifyjtw)to so we can router to another file or processs
 router.route("/refresh-token").post(refreshaccesstoken)
 export default router
