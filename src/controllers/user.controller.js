@@ -179,4 +179,33 @@ const refreshaccesstoken =asyncHandler(async(req,res)=>{ //this a point where th
      throw new Apierror(401,error?.message || "invalidrefreshaccesstoken")
    }
 })
-export {resgiteruser, loginuser, logoutuser,refreshaccesstoken}
+const changeCurrentpassword= asyncHandler(async(req,res)=>{
+    const {oldpassword,newpassword}= req.body //getting the password from the user from the from or forntend side
+    const user=await User.findById(req.user?._id) //findinmmg user with it id 
+    const isPasswordcorrect= await user.isPasswordCorrect(oldpassword)
+    if(!isPasswordcorrect){
+        throw new ApiError(400,"invalid old password")
+    }
+    user.password=newpassword
+    await user.save({validateBeforeSave:false})
+    return res.status(200).json(new ApiRespone(200,{},"password changed sucessfully"))
+})
+const getuserdetails=asyncHandler(async(req,res)=>{
+    return res.status(200).json(new ApiRespone(200,req.user,"the user details are fetched sucessfully"))
+})
+const updatinguserdeatils=asyncHandler(async(req,res)=>{
+    const {fullname,email,username}=req.body //fecthing the deatils from the client side or frontend 
+    if(!fullname || !email){
+        throw new ApiError(400,"the fullname && email need to be filled ")
+    }
+    User.findByIdAndUpdate(req.user?._id,{
+        $set:{ //in this we are updatiung the details of user by using the set opertor method  it updates in db
+            fullname,
+            email
+        }
+    }).select("-password")
+    return res.status(200).json(200,user,"update the account details sucessfully")
+})
+
+
+export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils}
