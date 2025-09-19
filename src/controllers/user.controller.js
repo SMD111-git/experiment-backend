@@ -176,7 +176,7 @@ const refreshaccesstoken =asyncHandler(async(req,res)=>{ //this a point where th
     return res.status(200).cookie("acesstoke",accesstoken,options).cookie("newRefreshtoken",newRefreshToken,options)
     .json(new ApiRespone(200,{accesstoken,newRefreshToken},"access token refreshed")) 
    } catch (error) {
-     throw new Apierror(401,error?.message || "invalidrefreshaccesstoken")
+     throw new ApiError(401,error?.message || "invalidrefreshaccesstoken")
    }
 })
 const changeCurrentpassword= asyncHandler(async(req,res)=>{
@@ -194,18 +194,41 @@ const getuserdetails=asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiRespone(200,req.user,"the user details are fetched sucessfully"))
 })
 const updatinguserdeatils=asyncHandler(async(req,res)=>{
-    const {fullname,email,username}=req.body //fecthing the deatils from the client side or frontend 
+    const {fullname,email}=req.body //fecthing the deatils from the client side or frontend 
     if(!fullname || !email){
         throw new ApiError(400,"the fullname && email need to be filled ")
     }
-    User.findByIdAndUpdate(req.user?._id,{
+    const user = await User.findByIdAndUpdate(req.user?._id,{
         $set:{ //in this we are updatiung the details of user by using the set opertor method  it updates in db
             fullname,
             email
         }
-    }).select("-password")
-    return res.status(200).json(200,user,"update the account details sucessfully")
+    },
+    {new:true}//this statment or linne of code update the value and stores in db after it is updated 
+    ).select("-password")
+    return res.status(200).json( new ApiRespone(200,user,"update the account details sucessfully"))
+})
+const updateuserAvatar=asyncHandler(async(req,res)=>{
+    const avatarlocal=req.file?.path
+    if(!avatarlocal){
+        throw new ApiError(400,"avatar file is  missing");
+    }
+    const avatar =await uploadOncloudinary(avatarlocal)
+    if(!avatar.url){
+        throw new ApiError(400,"avatar file is missing")
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set:{
+                avatar:avatar.url
+            }
+        },
+        {new:true}).select("-password")
+        return res.status(200).json(new ApiRespone(200,user,"avatra image upload sucessfully"))
 })
 
 
-export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils}
+export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils,
+updateuserAvatar
+
+}
