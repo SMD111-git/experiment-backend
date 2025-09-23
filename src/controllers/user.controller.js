@@ -226,6 +226,14 @@ const updateuserAvatar=asyncHandler(async(req,res)=>{
         {new:true}).select("-password")
         return res.status(200).json(new ApiRespone(200,user,"avatra image upload sucessfully"))
 })
+//coverimage update:
+
+
+
+
+
+
+
 
 
 export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils,
