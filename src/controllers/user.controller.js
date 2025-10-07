@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken"
 import { throws } from "assert"
 import { channel, hasSubscribers, subscribe } from "diagnostics_channel"
 import { timeStamp } from "console"
+import mongoose from "mongoose"
 const generateAcessANDRefreshtoken = async (userId) => {
     try {
         const user = await User.findById(userId)
@@ -288,8 +289,30 @@ const getuserChannelProfile=asyncHandler(async(req,res)=>{
         }
     }
 ]) //USer is from the db document, and we are find the username using the aggreagtion piepline
-
+if(!channel?.length){ //checking the user has channel or not
+    throw new ApiError(404,"chaneel doesnot exist")
+}
+return res.status(200).json(new ApiRespone(200,channel[0],"user channel fetch sucessfully"))
     
+})
+const getuserwatchhistory=asyncHandler(async(req,res)=>{
+    const user= await User.aggregate([
+        {
+            $match:{
+                _id:new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watrchhistory",
+                foreignField:"_id",
+                as:"watch history"
+
+            }
+        }
+    ])
+
 })
 
 
