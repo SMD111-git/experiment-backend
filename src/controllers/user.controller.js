@@ -6,6 +6,8 @@ import {uploadOncloudinary} from "../utils/cloudinary.js"
 import {ApiRespone} from "../utils/ApiRespone.js"
 import jwt from "jsonwebtoken"
 import { throws } from "assert"
+import { channel, hasSubscribers, subscribe } from "diagnostics_channel"
+import { timeStamp } from "console"
 const generateAcessANDRefreshtoken = async (userId) => {
     try {
         const user = await User.findById(userId)
@@ -237,8 +239,55 @@ const getuserChannelProfile=asyncHandler(async(req,res)=>{
    const channel= await User.aggregate([{
     $match:{
         username:username?.toLowerCase() //username:(this is field)
+    }},
+    {
+        $lookup:{ //here we join the different collection and see underone roof 
+            from:"subscriptions",  // here we trying to see the subscribers of the channel (no of subscribers who subscrinbed to this username)
+            localField:"_id",
+            foreignFeild:"channel",
+            as:"subscribers"
+        }
+    },
+    {
+         $lookup:{ //here we are try to see the user subscribed to whom (the user to whom he has subscribed)
+            from:"subscriptions",
+            localField:"_id",
+            foreignFeild:"subscriber",
+            as:"subscribed to"
+        } 
+    },
+    {
+        $addFields:{
+            subscribescount:{ //get the count of the subscribers
+                $size:"$subscribers"
+            },
+            channelsubscribedTOcount:{ //get the count of subscribed channel by user
+                $size:"$subscribed to"
+            },
+            issubscribed:{
+                $cond:{
+                    if:{$in:[req.user?._id,"$subscribers.subscriber"]}, //in this it a condtional check with opeator "in" is that particualr username or id is subscriber or not of channel
+                    then:true,
+                    else:false
+                }
+            }
+        }
+    },
+    {
+        $project:{ //this shows olny a partciular set of collection or similar select from table to a patrciualr filed to display
+            fullname:1,
+            username:1,
+            subscribescount:1,
+            channelsubscribedTOcount:1,
+            issubscribed:1,
+            avatar:1,
+            coverimage:1,
+            email:1,
+            timeStamp:1
+
+        }
     }
-   }]) //USer is from the db document, and we are find the username using the aggreagtion piepline
+]) //USer is from the db document, and we are find the username using the aggreagtion piepline
 
     
 })
