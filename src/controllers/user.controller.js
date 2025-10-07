@@ -228,7 +228,20 @@ const updateuserAvatar=asyncHandler(async(req,res)=>{
 })
 //coverimage update:
 
+const getuserChannelProfile=asyncHandler(async(req,res)=>{
+    const{username}=req.params //this is a metthod to get the username or profile from url of the site
+    if(!username?.trim()){ //this checks whether the given username  is empty or anyother params 
+        throw new ApiError(400,"username is missing")
+    }
+    //here we try to find the username from User doucment of db
+   const channel= await User.aggregate([{
+    $match:{
+        username:username?.toLowerCase() //username:(this is field)
+    }
+   }]) //USer is from the db document, and we are find the username using the aggreagtion piepline
 
+    
+})
 
 
 
@@ -237,6 +250,6 @@ const updateuserAvatar=asyncHandler(async(req,res)=>{
 
 
 export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils,
-updateuserAvatar
+updateuserAvatar,getuserChannelProfile
 
 }
