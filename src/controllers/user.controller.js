@@ -335,7 +335,16 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
                             from:"users",
                             localField:"watchhistory", //from userside
                             foreignField:"_id", //from the other side from video db or scehma 
-                            as:"owner"
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullname:1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
                         }
                     }
                 ]
