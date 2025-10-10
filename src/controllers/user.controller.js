@@ -251,7 +251,7 @@ const updateuserCoverimage=asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiRespone(200,user,"coverimage upload sucessfully"))
 
 })
-
+//get the count of subscriber and profiles channels with aggeragation pipeline
 const getuserChannelProfile=asyncHandler(async(req,res)=>{
     const{username}=req.params //this is a metthod to get the username or profile from url of the site
     if(!username?.trim()){ //this checks whether the given username  is empty or anyother params 
@@ -326,7 +326,7 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
         {
             $lookup:{
                 from:"videos",
-                localField:"watrchhistory",
+                localField:"watchhistory",
                 foreignField:"_id",
                 as:"watch history"
 
