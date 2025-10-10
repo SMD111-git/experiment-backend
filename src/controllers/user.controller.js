@@ -319,16 +319,26 @@ return res.status(200).json(new ApiRespone(200,channel[0],"user channel fetch su
 const getuserwatchhistory=asyncHandler(async(req,res)=>{
     const user= await User.aggregate([
         {
-            $match:{
+            $match:{ //here we are getting the user id and next as the user id matchs then next the codes goes to find the watchhistory 
                 _id:new mongoose.Types.ObjectId(req.user._id)
             }
         },
         {
-            $lookup:{
-                from:"videos",
-                localField:"watchhistory",
-                foreignField:"_id",
-                as:"watch history"
+            $lookup:{//this pipeline get the watch history of that partciular user id.
+                from:"videos",//this db from where should it get the videos of video schems varaible and add s to the varaible at end
+                localField:"watchhistory", //id of userscehma or userside
+                foreignField:"_id", //id of video scehma or videoside
+                as:"watch history",
+                pipeline:[
+                    {
+                        $lookup:{ //this to get the video owner 
+                            from:"users",
+                            localField:"watchhistory", //from userside
+                            foreignField:"_id", //from the other side from video db or scehma 
+                            as:"owner"
+                        }
+                    }
+                ]
 
             }
         }
@@ -343,6 +353,6 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
 
 
 export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils,
-updateuserAvatar,getuserChannelProfile
+updateuserAvatar,getuserChannelProfile,getuserwatchhistory
 
 }
