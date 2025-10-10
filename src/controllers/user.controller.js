@@ -211,6 +211,7 @@ const updatinguserdeatils=asyncHandler(async(req,res)=>{
     ).select("-password")
     return res.status(200).json( new ApiRespone(200,user,"update the account details sucessfully"))
 })
+//update profile image :
 const updateuserAvatar=asyncHandler(async(req,res)=>{
     const avatarlocal=req.file?.path
     if(!avatarlocal){
@@ -226,10 +227,30 @@ const updateuserAvatar=asyncHandler(async(req,res)=>{
                 avatar:avatar.url
             }
         },
-        {new:true}).select("-password")
+        {new:true}).select("-password") 
         return res.status(200).json(new ApiRespone(200,user,"avatra image upload sucessfully"))
 })
 //coverimage update:
+const updateuserCoverimage=asyncHandler(async(req,res)=>{
+    const coverimagelocal=req.file?.path
+    if(!coverimagelocal){
+        throw new ApiError(400,"coverimage file is missing")
+    }
+    const coverimage=await uploadOncloudinary(coverimagelocal)
+    if(!coverimage.url){
+        throw new ApiError(400,"coverimage is missing")
+    }
+    const user=await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set:{
+                coverimage:coverimage.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+    return res.status(200).json(new ApiRespone(200,user,"coverimage upload sucessfully"))
+
+})
 
 const getuserChannelProfile=asyncHandler(async(req,res)=>{
     const{username}=req.params //this is a metthod to get the username or profile from url of the site
