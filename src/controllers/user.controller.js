@@ -336,15 +336,23 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
                             localField:"watchhistory", //from userside
                             foreignField:"_id", //from the other side from video db or scehma 
                             as:"owner",
-                            pipeline:[
+                            pipeline:[ //this pipeline is used here because the above pipeline is asking the owner details to show his full name and username
                                 {
-                                    $project:{
+                                    $project:{ // this operaor showcases the owner name and user name, profile photo as an array, if donot use this it will show whole db of owner or user from id to password 
                                         fullname:1,
                                         username:1,
-                                        avatar:1
+                                        avatar:1 //as we have done whole thing inside the owner pipeline is will shown inside the filed in structure manner
                                     }
                                 }
                             ]
+                        }
+                    },
+                    {
+                        $addFields:{ //this 
+                            owner//is a varaible which named any thong but here we have overwirtten it
+                            :{
+                                $first:"$owner" //this a way to access the the array elements  of owner from the db with the help of addfiled we can access just by the given filed in name in the "$first:".
+                            }
                         }
                     }
                 ]
@@ -352,7 +360,7 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
             }
         }
     ])
-
+    return res.status(200).json( new ApiRespone(200,user[0].watchhistory,"watch history fecthed succesffuly")) //user[0] we get the first value from db and watchhistory 
 })
 
 
@@ -362,6 +370,6 @@ const getuserwatchhistory=asyncHandler(async(req,res)=>{
 
 
 export {resgiteruser, loginuser, logoutuser,refreshaccesstoken,changeCurrentpassword,getuserdetails,updatinguserdeatils,
-updateuserAvatar,getuserChannelProfile,getuserwatchhistory
+updateuserAvatar,updateuserCoverimage,getuserChannelProfile,getuserwatchhistory
 
 }
