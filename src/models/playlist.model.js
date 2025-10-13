@@ -15,3 +15,4 @@ const playlistSchema= new Schema({
 
 
 })
+export const Playlist=mongoose.model("playlsit",playlistSchema)
