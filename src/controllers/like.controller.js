@@ -44,3 +44,4 @@ const commetsliked= asyncHandler(async(req,res)=>{
     return res.status(201).json(new ApiRespone(201,"the comment is successfully liked"))
 })
 
+export{videoliked,commetsliked}
