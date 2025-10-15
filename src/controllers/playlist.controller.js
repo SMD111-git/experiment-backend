@@ -1,8 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/Apierror";
 import { Playlist } from "../models/playlist.model";
 import { ApiRespone } from "../utils/ApiRespone";
+import { User } from "../models/user.model";
 
 
 const createplaylist=asyncHandler(async(req,res)=>{
@@ -28,4 +29,33 @@ const getuserplaylist=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"this was not created")
     }
     return res.status(200).json(new ApiRespone(200,"the userplaylist is fecthed suceesfully"))
+})
+const Addvideoplaylist=asyncHandler(async(req,res)=>{
+    const {playlist_id,video_id}=req.params;
+    if(!isValidObjectId(playlist_id) || !isValidObjectId(video_id)){
+        throw new ApiError(400,"innvalid playlistID or videoID")
+
+    }
+    const playlist=await Playlist.findById(playlist_id)
+    if(req.user_id.toString() !=playlist.owner.toString()){
+        throw new ApiError(400,"as your not authoried user to access")
+    }
+    const updateplaylist=await Playlist.aggregate([
+        {
+            $match:{
+                _id:new mongoose.Types.ObjectId(playlist_id)
+            },
+        },
+        {
+            $addFields:{
+                
+            }
+        }
+
+        
+    ])
+        
+    
+
+
 })
