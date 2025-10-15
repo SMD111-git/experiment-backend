@@ -4,6 +4,7 @@ import { ApiError } from "../utils/Apierror";
 import { Playlist } from "../models/playlist.model";
 import { ApiRespone } from "../utils/ApiRespone";
 import { User } from "../models/user.model";
+import { video } from "../models/video.model";
 
 
 const createplaylist=asyncHandler(async(req,res)=>{
@@ -48,14 +49,27 @@ const Addvideoplaylist=asyncHandler(async(req,res)=>{
         },
         {
             $addFields:{
-                
-            }
-        }
+             Videos:{
+                    $setUnion:["$Videos",[new   mongoose.Types.ObjectId(video_id)]]       
+                },
+            },
+        },
+        {
+            $merge:{
+                into:"playlists",
+            },
+        },
 
         
     ])
-        
+    if(!updateplaylist){
+        throw new ApiError(400,"the playlist is not existing to update")
+    }
+    return res.status(200).json(new ApiRespone(200,updateplaylist,"video is sucessfully updated"))
     
 
-
 })
+const removeplaylist=asyncHandler(async(req,res)=>{
+    const deleteplaylist=req.params(playlist_id)
+})
+
